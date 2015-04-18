@@ -1,0 +1,52 @@
+<style>
+	.status-U {
+		background: yellow;
+	}
+</style>
+<h1>Sunday {{{format_date sundayDate}}}</h1>
+
+		<hr>
+{{#each services}}
+		<div style="float: left">
+<h2>{{plan_title}}</h2>
+
+<table>
+{{#each filteredPeople}}
+	<tr>
+		<td>{{this.status}}</td>
+		<td>{{this.category_name}}</td>
+		<td>{{this.position}}</td>
+		<td>{{this.person_name}}</td>
+		<td>
+		{{#each this.person.contact_data.email_addresses}}
+			{{this.address}}
+		{{/each}}
+		</td>
+	</tr>
+{{/each}}
+</table>
+
+		</div>
+{{/each}}
+
+		<div style="clear: both">
+			<hr>
+
+			{{#each services}}
+				<h2>{{plan_title}}</h2>
+
+					{{#each filteredPeople}}
+			<div class="status-{{this.status}}">- {{this.person_name}} ({{this.position}})</div>
+					{{/each}}
+
+			{{/each}}
+		</div>
+
+		<hr>
+{{#each services}}
+	{{#each filteredPeople}}
+			{{#each this.person.contact_data.email_addresses}}
+			<div>{{this.address}}</div>
+			{{/each}}
+	{{/each}}
+{{/each}}
