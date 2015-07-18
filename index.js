@@ -10,6 +10,7 @@ var moment = require('moment');
 var OAuth   = require('oauth-1.0a');
 var debug = require('debug')('app');
 var util = require('util');
+var Path = require('path');
 var config = require('./config.json');
 var oauthConfig = config.oauth;
 var oauthClient = OAuth({
@@ -45,6 +46,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.set('view engine', 'html');
 app.engine('html', require('hbs').__express);
+app.set('views', Path.resolve(__dirname, 'views'));
 
 hbs.registerHelper('indent_pixels', function(level) {
 	return level * 20 + 'px';
