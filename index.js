@@ -56,8 +56,8 @@ hbs.registerHelper('debug', function(obj) {
 	return util.inspect(obj);
 });
 
-hbs.registerHelper('format_date', function(date) {
-	return moment(date).format('DD MMM YYYY');
+hbs.registerHelper('format_date', function(date, format) {
+	return moment(date).format(format);
 });
 
 /*app.post('/login',
@@ -110,7 +110,7 @@ app.get('/:typeId(\\d+)/:planId(\\d+)', Lib.auth, function(req, res) {
 });
 
 app.get('/sunday', Lib.auth, function(req, res) {
-	var sundayDate = moment().day(7);
+	var sundayDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment().day(7);
 	var services = [];
 	var filter = {
 		serviceTypes: req.query.serviceType.split(',').map(_.parseInt),
@@ -119,7 +119,7 @@ app.get('/sunday', Lib.auth, function(req, res) {
 	};
 
 	Lib.promisesForEachParallel(filter.serviceTypes, function(serviceType) {
-		return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/service_types/' + serviceType + '/plans.json').then(function(response) {
+		return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/service_types/' + serviceType + '/plans.json?all=true').then(function(response) {
 			return Lib.promisesForEachParallel(response, function(service) {
 				//var date = new Date(service.sort_date);
 				if (sundayDate.isSame(service.sort_date, 'day')) {

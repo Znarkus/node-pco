@@ -12,7 +12,11 @@
 		padding: 5px;
 	}
 </style>
-<h1>Sunday {{{format_date sundayDate}}}</h1>
+
+<h1>Sunday {{{format_date sundayDate 'D MMM YYYY'}}}</h1>
+
+<input value="{{{format_date sundayDate 'YYYY-MM-DD'}}}">
+<button>Change</button>
 
 <div style="clear: both">
 	{{#each services}}
