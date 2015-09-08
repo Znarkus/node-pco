@@ -11,12 +11,18 @@
 	.service-card td {
 		padding: 5px;
 	}
+	form > div {
+		margin: 10px 0;
+	}
+	label {
+		display: block;
+	}
+	input[type="text"] {
+		width: 500px;
+	}
 </style>
 
 <h1>Sunday {{{format_date sundayDate 'D MMM YYYY'}}}</h1>
-
-<input value="{{{format_date sundayDate 'YYYY-MM-DD'}}}">
-<button>Change</button>
 
 <div style="clear: both">
 	{{#each services}}
@@ -69,3 +75,25 @@
 
 </div>
 {{/each}}
+
+<div style="clear: both;"></div>
+
+<form action="/sunday" method="get" style="margin: 40px 0;">
+	<div>
+		<label for="filter-service-type">Service Type</label><input type="text" id="filter-service-type" name="serviceType" value="{{query.serviceType}}">
+	</div>
+
+	<div>
+		<label for="filter-category-name">Category name</label><input type="text" id="filter-category-name" name="categoryName" value="{{query.categoryName}}">
+	</div>
+
+	<div>
+		<label for="filter-exclude-position">Exclude position</label><input type="text" id="filter-exclude-position" name="excludePosition" value="{{query.excludePosition}}">
+	</div>
+
+	<div>
+		<label for="filter-date">Date</label><input type="text" id="filter-date" name="date" value="{{{format_date sundayDate 'YYYY-MM-DD'}}}">
+	</div>
+
+	<button type="submit">Change</button>
+</form>

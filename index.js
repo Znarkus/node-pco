@@ -113,11 +113,11 @@ app.get('/sunday', Lib.auth, function(req, res) {
 	var sundayDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment().day(7);
 	var services = [];
 	var filter = {
-		serviceTypes: req.query.serviceType.split(',').map(_.parseInt),
-		categoryNames: req.query.categoryName.toLowerCase().split(','),
+		serviceTypes: req.query.serviceType ? req.query.serviceType.split(',').map(_.parseInt) : [],
+		categoryNames: req.query.categoryName ? req.query.categoryName.toLowerCase().split(',') : [],
 		excludePositions: req.query.excludePosition ? req.query.excludePosition.toLowerCase().split(',') : []
 	};
-
+	
 	Lib.promisesForEachParallel(filter.serviceTypes, function(serviceType) {
 		return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/service_types/' + serviceType + '/plans.json?all=true').then(function(response) {
 			return Lib.promisesForEachParallel(response, function(service) {
@@ -166,7 +166,12 @@ app.get('/sunday', Lib.auth, function(req, res) {
 			});
 		});
 
-		res.render('sunday', { services: services, sundayDate: sundayDate, filteredEmails: _.uniq(filteredEmails) });
+		res.render('sunday', {
+			services: services,
+			sundayDate: sundayDate,
+			filteredEmails: _.uniq(filteredEmails),
+			query: req.query
+		});
 	});
 });
 
