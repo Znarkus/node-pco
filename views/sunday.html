@@ -24,25 +24,27 @@
 
 <h1>Sunday {{{format_date sundayDate 'D MMM YYYY'}}}</h1>
 
-<div style="clear: both">
+<p style="clear: both">
 	{{#each services}}
-	<h2>{{service_type_name}}: {{plan_title}}</h2>
+	<strong>{{service_type_name}}: {{plan_title}}</strong><br>
 
 	{{#each filteredPeople}}
-	<div class="status-{{this.status}}">
-		- {{this.person_name}}
+		<span class="status-{{this.status}}">
+			- {{this.person_name}}
 
-		{{#if display_service_time}}
-			({{position_display_times}} {{this.position}})
-		{{else}}
-			({{this.position}})
-		{{/if}}
-
-	</div>
+			{{#if display_service_time}}
+				({{position_display_times}} {{this.position}})
+			{{else}}
+				({{this.position}})
+			{{/if}}
+		</span>
+		<br>
 	{{/each}}
 
+	<br>
+
 	{{/each}}
-</div>
+</p>
 
 <hr>
 

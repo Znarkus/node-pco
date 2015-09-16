@@ -155,7 +155,6 @@ app.get('/sunday', Lib.auth, function(req, res) {
 		//var missingEmail = [];
 
 		_.forEach(services, function (service) {
-
 			_.forEach(service.filteredPeople, function (person) {
 				person.display_service_time = person.position_display_times && service.service_times.length > 1;
 
@@ -165,6 +164,8 @@ app.get('/sunday', Lib.auth, function(req, res) {
 				});
 			});
 		});
+
+		services = _.sortBy(services, 'sort_date');
 
 		res.render('sunday', {
 			services: services,
