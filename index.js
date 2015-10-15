@@ -138,7 +138,7 @@ app.get('/sunday', Lib.auth, function(req, res) {
 
 			return Lib.promisesForEachParallel(service.plan_people, function(person) {
 				if (_.indexOf(filter.categoryNames, person.category_name.toLowerCase()) != -1) {
-					if (_.indexOf(filter.excludePositions, person.position.toLowerCase()) == -1) {
+					if (_.indexOf(filter.excludePositions, person.position.toLowerCase().trim()) == -1) {
 						if (person.status != 'D') {
 							service.filteredPeople.push(person);
 						}
