@@ -23,13 +23,17 @@ function fillListWithPersonData(user, items) {
 	return load(0);
 
 	function load(index) {
-		return loadPerson(user, items[index].person_id).then(function(person) {
-			items[index].person = person;
+		if (items[index]) {
+			return loadPerson(user, items[index].person_id).then(function(person) {
+				items[index].person = person;
 
-			if (index + 1 < items.length) {
-				return load(index + 1);
-			}
-		})
+				if (index + 1 < items.length) {
+					return load(index + 1);
+				}
+			})
+		} else {
+			debug('Index %s is missing from:\n%j', index, items);
+		}
 	}
 
 }
