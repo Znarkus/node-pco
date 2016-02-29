@@ -53,7 +53,7 @@ hbs.registerHelper('indent_pixels', function(level) {
 });
 
 hbs.registerHelper('debug', function(obj) {
-	return util.inspect(obj);
+	return JSON.stringify(obj, null, 2);
 });
 
 hbs.registerHelper('format_date', function(date, format) {
@@ -70,27 +70,7 @@ hbs.registerHelper('format_date', function(date, format) {
 
 
 app.get('/', Lib.auth, function (req, res) {
-	var items = [];
-
-	Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/organization.json').then(function(response) {
-
-		recurse(response, 0);
-
-		function recurse(level, levelIndex) {
-			_.forEach(level.service_types, function(type) {
-				console.log(type);
-				type.level = levelIndex;
-				items.push(type);
-			});
-
-			_.forEach(level.service_type_folders, function(folder) {
-				console.error(folder);
-				folder.level = levelIndex;
-				items.push(folder);
-				recurse(folder, levelIndex + 1);
-			});
-		}
-
+	listServiceTypes(req.user).then(function (items) {
 		res.render('index', { items: items });
 	});
 });
@@ -112,12 +92,18 @@ app.get('/:typeId(\\d+)/:planId(\\d+)', Lib.auth, function(req, res) {
 app.get('/sunday', Lib.auth, function(req, res) {
 	var sundayDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment().day(7);
 	var services = [];
+
 	var filter = {
-		serviceTypes: req.query.serviceType ? req.query.serviceType.split(',').map(_.parseInt) : [],
+		//serviceTypes: req.query.serviceType ? req.query.serviceType.split(',').map(_.parseInt) : [],
 		categoryNames: req.query.categoryName ? req.query.categoryName.toLowerCase().split(',') : [],
 		excludePositions: req.query.excludePosition ? req.query.excludePosition.toLowerCase().split(',') : []
 	};
-	
+
+	if (req.query.serviceType) {
+		filter.serviceTypes = _.isArray(req.query.serviceType) ? req.query.serviceType : [req.query.serviceType];
+		filter.serviceTypes = filter.serviceTypes.map(_.parseInt);
+	}
+
 	Lib.promisesForEachParallel(filter.serviceTypes, function(serviceType) {
 		return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/service_types/' + serviceType + '/plans.json?all=true').then(function(response) {
 			return Lib.promisesForEachParallel(response, function(service) {
@@ -151,8 +137,14 @@ app.get('/sunday', Lib.auth, function(req, res) {
 			return Lib.fillListWithPersonData(req.user, service.filteredPeople);
 		});
 	}).then(function() {
+		return listServiceTypes(req.user);
+	}).then(function(serviceTypes) {
 		var filteredEmails = [];
 		//var missingEmail = [];
+
+		_.forEach(serviceTypes, function (type) {
+			type.selected = filter.serviceTypes.indexOf(type.id) > -1;
+		});
 
 		_.forEach(services, function (service) {
 			_.forEach(service.filteredPeople, function (person) {
@@ -169,6 +161,7 @@ app.get('/sunday', Lib.auth, function(req, res) {
 
 		res.render('sunday', {
 			services: services,
+			serviceTypes: serviceTypes,
 			sundayDate: sundayDate,
 			filteredEmails: _.uniq(filteredEmails),
 			query: req.query
@@ -190,9 +183,6 @@ app.get('/auth/provider/callback', function(req, res, next) {
 		if (err) { return next(err); }
 		if (!user) { return res.redirect('/auth/provider'); }
 		req.logIn(user, function(err) {
-			//console.error(arguments);
-			//console.error(req.session.authReturnUrl);
-			//process.exit(1);
 			if (err) { return next(err); }
 			return res.redirect(req.session.authReturnUrl ? req.session.authReturnUrl : '/');
 		});
@@ -212,3 +202,28 @@ var server = app.listen(config.port, function () {
 	console.log('Example app listening at http://%s:%s', host, port);
 
 });
+
+function listServiceTypes(user) {
+	return Lib.callApi(user, 'GET', 'https://services.planningcenteronline.com/organization.json').then(function(response) {
+		var items = [];
+
+		recurse(response, 0);
+
+		function recurse(level, levelIndex) {
+			_.forEach(level.service_types, function(type) {
+				//console.log(type);
+				type.level = levelIndex;
+				items.push(type);
+			});
+
+			_.forEach(level.service_type_folders, function(folder) {
+				//console.error(folder);
+				folder.level = levelIndex;
+				items.push(folder);
+				recurse(folder, levelIndex + 1);
+			});
+		}
+
+		return items;
+	});
+}

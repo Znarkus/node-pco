@@ -22,6 +22,8 @@
 	}
 </style>
 
+<a href="/">All services</a>
+
 <h1>Sunday {{{format_date sundayDate 'D MMM YYYY'}}}</h1>
 
 <p style="clear: both">
@@ -82,7 +84,17 @@
 
 <form action="/sunday" method="get" style="margin: 40px 0;">
 	<div>
-		<label for="filter-service-type">Service Type</label><input type="text" id="filter-service-type" name="serviceType" value="{{query.serviceType}}">
+		<label for="filter-service-type">Service Type</label>
+
+		<div>
+			<select multiple name="serviceType" id="filter-service-type" style="height: 200px">
+				{{#each serviceTypes}}
+				<option style="padding-left: {{{indent_pixels level}}}" value="{{id}}" {{#if selected}}selected{{/if}}>
+					[{{type}}] {{name}} (#{{id}})
+				</option>
+				{{/each}}
+			</select>
+		</div>
 	</div>
 
 	<div>
