@@ -84,7 +84,7 @@
 
 <form action="/sunday" method="get" style="margin: 40px 0;">
 	<div>
-		<label for="filter-service-type">Service Type</label>
+		<label for="filter-service-type">Service Types</label>
 
 		<div>
 			<select multiple name="serviceType" id="filter-service-type" style="height: 200px">
@@ -98,11 +98,21 @@
 	</div>
 
 	<div>
-		<label for="filter-category-name">Category name</label><input type="text" id="filter-category-name" name="categoryName" value="{{query.categoryName}}">
+		<label for="filter-category-name">Category Names</label>
+
+		<div>
+			<select multiple name="categoryName" id="filter-category-name" style="height: 100px">
+				{{#each categoryNames}}
+				<option value="{{name}}" {{#if selected}}selected{{/if}}>
+				{{name}}
+				</option>
+				{{/each}}
+			</select>
+		</div>
 	</div>
 
 	<div>
-		<label for="filter-exclude-position">Exclude position</label><input type="text" id="filter-exclude-position" name="excludePosition" value="{{query.excludePosition}}">
+		<label for="filter-exclude-position">Exclude Position</label><input type="text" id="filter-exclude-position" name="excludePosition" value="{{query.excludePosition}}">
 	</div>
 
 	<div>

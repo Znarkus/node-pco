@@ -92,16 +92,24 @@ app.get('/:typeId(\\d+)/:planId(\\d+)', Lib.auth, function(req, res) {
 app.get('/sunday', Lib.auth, function(req, res) {
 	var sundayDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment().day(7);
 	var services = [];
+	var categoryNames = {};
 
 	var filter = {
 		//serviceTypes: req.query.serviceType ? req.query.serviceType.split(',').map(_.parseInt) : [],
-		categoryNames: req.query.categoryName ? req.query.categoryName.toLowerCase().split(',') : [],
+		//categoryNames: req.query.categoryName ? req.query.categoryName.toLowerCase().split(',') : [],
 		excludePositions: req.query.excludePosition ? req.query.excludePosition.toLowerCase().split(',') : []
 	};
 
 	if (req.query.serviceType) {
 		filter.serviceTypes = _.isArray(req.query.serviceType) ? req.query.serviceType : [req.query.serviceType];
 		filter.serviceTypes = filter.serviceTypes.map(_.parseInt);
+	}
+
+	if (req.query.categoryName) {
+		filter.categoryNames = _.isArray(req.query.categoryName) ? req.query.categoryName : [req.query.categoryName];
+		filter.categoryNames = filter.categoryNames.map(function (v) {
+			return v.toLowerCase();
+		});
 	}
 
 	Lib.promisesForEachParallel(filter.serviceTypes, function(serviceType) {
@@ -123,7 +131,11 @@ app.get('/sunday', Lib.auth, function(req, res) {
 			service.filteredPeople = [];
 
 			return Lib.promisesForEachParallel(service.plan_people, function(person) {
-				if (_.indexOf(filter.categoryNames, person.category_name.toLowerCase()) != -1) {
+				var includeCategory = _.indexOf(filter.categoryNames, person.category_name.toLowerCase()) > -1;
+
+				categoryNames[person.category_name] = { name: person.category_name, selected: includeCategory };
+
+				if (includeCategory) {
 					if (_.indexOf(filter.excludePositions, person.position.toLowerCase().trim()) == -1) {
 						if (person.status != 'D') {
 							service.filteredPeople.push(person);
@@ -163,6 +175,7 @@ app.get('/sunday', Lib.auth, function(req, res) {
 			services: services,
 			serviceTypes: serviceTypes,
 			sundayDate: sundayDate,
+			categoryNames: categoryNames,
 			filteredEmails: _.uniq(filteredEmails),
 			query: req.query
 		});
