@@ -41,7 +41,7 @@ passport.deserializeUser(function(user, done) {
 });
 
 app.use(cookieParser());
-app.use(session({ secret: 'keyboard cat' }));
+app.use(session({ secret: 'madu4688lG55I5422218f9vo6V1Gk2RF2n1145vl' }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.set('view engine', 'html');
@@ -68,6 +68,10 @@ hbs.registerHelper('format_date', function(date, format) {
 		res.redirect('/users/' + req.user.username);
 	});*/
 
+app.get('/logout', function(req, res){
+	req.logout();
+	res.redirect('/');
+});
 
 app.get('/', Lib.auth, function (req, res) {
 	listServiceTypes(req.user).then(function (items) {
