@@ -116,6 +116,13 @@ app.get('/sunday', Lib.auth, function(req, res) {
 		});
 	}
 
+	if (req.query.categoryPosition) {
+		filter.categoryPositions = _.isArray(req.query.categoryPosition) ? req.query.categoryPosition : [req.query.categoryPosition];
+		filter.categoryPositions = filter.categoryPositions.map(function (v) {
+			return v.toLowerCase().split('|');
+		});
+	}
+
 	Lib.promisesForEachParallel(filter.serviceTypes, function(serviceType) {
 		return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/service_types/' + serviceType + '/plans.json?all=true').then(function(response) {
 			return Lib.promisesForEachParallel(response, function(service) {
@@ -135,15 +142,31 @@ app.get('/sunday', Lib.auth, function(req, res) {
 			service.filteredPeople = [];
 
 			return Lib.promisesForEachParallel(service.plan_people, function(person) {
-				var includeCategory = _.indexOf(filter.categoryNames, person.category_name.toLowerCase()) > -1;
+				var position = person.position.toLowerCase().trim();
+				var category = person.category_name.toLowerCase();
+				var includeCategory = _.indexOf(filter.categoryNames, category) > -1;
+				var excludePosition = _.indexOf(filter.excludePositions, position) > -1;
+				var includeCategoryPosition = false;
+
+				/*
+				 ```
+				 filter.categoryPositions = [
+				   ['CATEGORY', 'POSITION']
+				 ]
+				 ```
+				 */
+				_.forEach(filter.categoryPositions, function (catPos) {
+					if (catPos[0] === category && catPos[1] === position) {
+						includeCategoryPosition = true;
+						return false;
+					}
+				});
 
 				categoryNames[person.category_name] = { name: person.category_name, selected: includeCategory };
 
-				if (includeCategory) {
-					if (_.indexOf(filter.excludePositions, person.position.toLowerCase().trim()) == -1) {
-						if (person.status != 'D') {
-							service.filteredPeople.push(person);
-						}
+				if ((includeCategory && !excludePosition) || (includeCategoryPosition)) {
+					if (person.status != 'D') {
+						service.filteredPeople.push(person);
 					}
 				}
 			});
