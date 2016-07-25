@@ -1,8 +1,10 @@
 <a href="/logout">Log out</a>
 
 <h1>Links</h1>
-		<a href="sunday?serviceType=564544&serviceType=564546&serviceType=564548&categoryName=TV/Media&categoryPosition=Worship%20Vocals|Lyrics">TV/Media Sunday</a><br>
-		<a href="sunday?serviceType=594570&serviceType=594572&serviceType=566837&categoryName=TV/Media">TV/Media Kids</a>
+{{#each links}}
+		<a href="{{this}}">{{@key}}</a><br>
+{{/each}}
+
 
 		<h1>Service types</h1>
 

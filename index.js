@@ -41,7 +41,7 @@ passport.deserializeUser(function(user, done) {
 });
 
 app.use(cookieParser());
-app.use(session({ secret: 'madu4688lG55I5422218f9vo6V1Gk2RF2n1145vl' }));
+app.use(session({ secret: config.secret || 'madu4688lG55I5422218f9vo6V1Gk2RF2n1145vl' }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.set('view engine', 'html');
@@ -75,7 +75,7 @@ app.get('/logout', function(req, res){
 
 app.get('/', Lib.auth, function (req, res) {
 	listServiceTypes(req.user).then(function (items) {
-		res.render('index', { items: items });
+		res.render('index', { items: items, links: config.links || {} });
 	});
 });
 
@@ -98,11 +98,7 @@ app.get('/sunday', Lib.auth, function(req, res) {
 	var services = [];
 	var categoryNames = {};
 
-	var filter = {
-		//serviceTypes: req.query.serviceType ? req.query.serviceType.split(',').map(_.parseInt) : [],
-		//categoryNames: req.query.categoryName ? req.query.categoryName.toLowerCase().split(',') : [],
-		excludePositions: req.query.excludePosition ? req.query.excludePosition.toLowerCase().split(',') : []
-	};
+	var filter = {};
 
 	if (req.query.serviceType) {
 		filter.serviceTypes = _.isArray(req.query.serviceType) ? req.query.serviceType : [req.query.serviceType];
@@ -112,6 +108,13 @@ app.get('/sunday', Lib.auth, function(req, res) {
 	if (req.query.categoryName) {
 		filter.categoryNames = _.isArray(req.query.categoryName) ? req.query.categoryName : [req.query.categoryName];
 		filter.categoryNames = filter.categoryNames.map(function (v) {
+			return v.toLowerCase();
+		});
+	}
+
+	if (req.query.excludePosition) {
+		filter.excludePositions = _.isArray(req.query.excludePosition) ? req.query.excludePosition : [req.query.excludePosition];
+		filter.excludePositions = filter.excludePositions.map(function (v) {
 			return v.toLowerCase();
 		});
 	}

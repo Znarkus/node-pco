@@ -7,5 +7,8 @@
 		"consumerKey": "xxx",
 		"consumerSecret": "yyy",
 		"callbackURL": "http://localhost:3000/auth/provider/callback"
+	},
+	"links": {
+		"TV/Media Sunday": "sunday?serviceType=564544&serviceType=564546&serviceType=564548&categoryName=TV/Media&categoryPosition=Worship%20Vocals|Lyrics"
 	}
 }
