@@ -147,7 +147,7 @@ app.get('/sunday', Lib.auth, function(req, res) {
 			return Lib.promisesForEachParallel(service.plan_people, function(person) {
 				var position = person.position.toLowerCase().trim();
 				var category = person.category_name.toLowerCase();
-				var includeCategory = _.indexOf(filter.categoryNames, category) > -1;
+				var includeCategory = !filter.categoryNames || _.indexOf(filter.categoryNames, category) > -1;
 				var excludePosition = _.indexOf(filter.excludePositions, position) > -1;
 				var includeCategoryPosition = false;
 
