@@ -11,7 +11,20 @@ var OAuth   = require('oauth-1.0a');
 var debug = require('debug')('app');
 var util = require('util');
 var Path = require('path');
-var config = require('./config.json');
+
+var config = {
+  "port": process.env.PORT || 3000,
+  "secret": process.env.SECRET || 'madu4688lG55I5422218f9vo6V1Gk2RF2n1145vl',
+  "oauth": {
+    "requestTokenURL": process.env.OAUTH_REQUEST_TOKEN_URL || "https://planningcenteronline.com/oauth/request_token",
+    "accessTokenURL": process.env.OAUTH_ACCESS_TOKEN_URL || "https://planningcenteronline.com/oauth/access_token",
+    "userAuthorizationURL": process.env.OAUTH_USER_AUTHORIZATION_URL || "https://planningcenteronline.com/oauth/authorize",
+    "consumerKey": process.env.OAUTH_CONSUMER_KEY || "xxx",
+    "consumerSecret": process.env.OAUTH_CONSUMER_SECRET || "yyy",
+    "callbackURL": process.env.OAUTH_CALLBACK_URL || "http://localhost:3000/auth/provider/callback"
+  }
+};
+
 var oauthConfig = config.oauth;
 var oauthClient = OAuth({
 	consumer: {
@@ -20,11 +33,11 @@ var oauthClient = OAuth({
 	},
 	signature_method: 'HMAC-SHA1'
 });
+
 var Lib = require('./lib')(oauthClient);
 
 passport.use('provider', new OAuthStrategy(oauthConfig,
 	function(token, tokenSecret, profile, done) {
-		//console.log(arguments);
 		done(null, {
 			public: token,
 			secret: tokenSecret
@@ -41,7 +54,7 @@ passport.deserializeUser(function(user, done) {
 });
 
 app.use(cookieParser());
-app.use(session({ secret: config.secret || 'madu4688lG55I5422218f9vo6V1Gk2RF2n1145vl' }));
+app.use(session({ secret: config.secret }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.set('view engine', 'html');
@@ -129,8 +142,11 @@ app.get('/sunday', Lib.auth, function(req, res) {
 	Lib.promisesForEachParallel(filter.serviceTypes, function(serviceType) {
 		return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/service_types/' + serviceType + '/plans.json?all=true').then(function(response) {
 			return Lib.promisesForEachParallel(response, function(service) {
-				//var date = new Date(service.sort_date);
-				if (sundayDate.isSame(service.sort_date, 'day')) {
+				// 2017/08/06 19:00:00 -0800
+				// Invalid time zone, strip it
+				const sortDate = moment(service.sort_date, 'YYYY/MM/DD HH:mm:ss')
+
+				if (sundayDate.isSame(sortDate, 'day')) {
 					return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/plans/' + service.id + '.json').then(function(response) {
 						services.push(response);
 						//Lib.fillListWithPersonData(req.user, response.plan_people, function() {

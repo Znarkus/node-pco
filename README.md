@@ -6,7 +6,7 @@ Planning Center Online reporting tool.
 2. npm i
 
 ## Configuration
-Copy config.example.json to config.json
+Environment variables. Create an .env file in development environment.
 
 ## /sunday
 

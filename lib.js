@@ -69,7 +69,7 @@ function callApi(user, method, url, cb) {
 			method: request_data.method,
 			form: oauthClient.authorize(request_data, token)
 		}, function(error, response, body) {
-			debug(body);
+			// debug(body);
 			body = JSON.parse(body);
 			//console.log(body);
 			resolve(body);
