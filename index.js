@@ -106,6 +106,132 @@ app.get('/:typeId(\\d+)/:planId(\\d+)', Lib.auth, function(req, res) {
 	});
 });
 
+app.get('/report', Lib.auth, function(req, res) {
+	var fromDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment();
+	var toDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment().add(7, 'days');
+	var services = [];
+	var categoryNames = {};
+
+	var filter = {
+    serviceTypes: []
+	};
+
+	if (req.query.serviceType) {
+		filter.serviceTypes = _.isArray(req.query.serviceType) ? req.query.serviceType : [req.query.serviceType];
+		filter.serviceTypes = filter.serviceTypes.map(_.parseInt);
+	}
+
+	if (req.query.categoryName) {
+		filter.categoryNames = _.isArray(req.query.categoryName) ? req.query.categoryName : [req.query.categoryName];
+		filter.categoryNames = filter.categoryNames.map(function (v) {
+			return v.toLowerCase();
+		});
+	}
+
+	if (req.query.excludePosition) {
+		filter.excludePositions = _.isArray(req.query.excludePosition) ? req.query.excludePosition : [req.query.excludePosition];
+		filter.excludePositions = filter.excludePositions.map(function (v) {
+			return v.toLowerCase();
+		});
+	}
+
+	if (req.query.categoryPosition) {
+		filter.categoryPositions = _.isArray(req.query.categoryPosition) ? req.query.categoryPosition : [req.query.categoryPosition];
+		filter.categoryPositions = filter.categoryPositions.map(function (v) {
+			return v.toLowerCase().split('|');
+		});
+	}
+
+	Lib.promisesForEachParallel(filter.serviceTypes, function(serviceType) {
+		return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/service_types/' + serviceType + '/plans.json?all=true').then(function(response) {
+			return Lib.promisesForEachParallel(response, function(service) {
+				// 2017/08/06 19:00:00 -0800
+				// Invalid time zone, strip it
+				const sortDate = moment(service.sort_date, 'YYYY/MM/DD HH:mm:ss')
+
+				if (sortDate.startOf('day').isBetween(fromDate, toDate)) {
+					return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/plans/' + service.id + '.json').then(function(response) {
+						response.parsedDate = sortDate
+						services.push(response);
+						//Lib.fillListWithPersonData(req.user, response.plan_people, function() {
+						//	res.render('plan', { data: response, people: people });
+						//});
+					});
+				}
+			});
+		})
+	}).then(function() {
+		return Lib.promisesForEachParallel(services, function(service) {
+			service.filteredPeople = [];
+
+			return Lib.promisesForEachParallel(service.plan_people, function(person) {
+				var position = person.position.toLowerCase().trim();
+				var category = person.category_name.toLowerCase();
+				var includeCategory = !filter.categoryNames || _.indexOf(filter.categoryNames, category) > -1;
+				var excludePosition = _.indexOf(filter.excludePositions, position) > -1;
+				var includeCategoryPosition = false;
+
+				/*
+				 ```
+				 filter.categoryPositions = [
+				   ['CATEGORY', 'POSITION']
+				 ]
+				 ```
+				 */
+				_.forEach(filter.categoryPositions, function (catPos) {
+					if (catPos[0] === category && catPos[1] === position) {
+						includeCategoryPosition = true;
+						return false;
+					}
+				});
+
+				categoryNames[person.category_name] = { name: person.category_name, selected: includeCategory };
+
+				if ((includeCategory && !excludePosition) || (includeCategoryPosition)) {
+					if (person.status != 'D') {
+						service.filteredPeople.push(person);
+					}
+				}
+			});
+		});
+	}).then(function() {
+		return Lib.promisesForEachParallel(services, function(service) {
+			return Lib.fillListWithPersonData(req.user, service.filteredPeople);
+		});
+	}).then(function() {
+		return listServiceTypes(req.user);
+	}).then(function(serviceTypes) {
+		var filteredEmails = [];
+		//var missingEmail = [];
+
+		_.forEach(serviceTypes, function (type) {
+			type.selected = filter.serviceTypes.indexOf(type.id) > -1;
+		});
+
+		_.forEach(services, function (service) {
+			_.forEach(service.filteredPeople, function (person) {
+				person.display_service_time = person.position_display_times && service.service_times.length > 1;
+
+				// Extract emails
+				_.forEach(person.person.contact_data.email_addresses, function (email) {
+					filteredEmails.push(email.address);
+				});
+			});
+		});
+
+		services = _.sortBy(services, 'sort_date');
+
+		res.render('report', {
+			services: services,
+			serviceTypes: serviceTypes,
+			categoryNames: categoryNames,
+			today: new Date(),
+			filteredEmails: _.uniq(filteredEmails),
+			query: req.query
+		});
+	});
+});
+
 app.get('/sunday', Lib.auth, function(req, res) {
 	var sundayDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment().day(7);
 	var services = [];
