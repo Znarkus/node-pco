@@ -84,7 +84,7 @@
 
 <div style="clear: both;"></div>
 
-<form action="/sunday" method="get" style="margin: 40px 0;">
+<form action="/report" method="get" style="margin: 40px 0;">
 	<div>
 		<label for="filter-service-type">Service Types</label>
 
@@ -118,7 +118,8 @@
 	</div>
 
 	<div>
-		<label for="filter-date">Date</label><input type="date" id="filter-date" name="date" value="{{{format_date sundayDate 'YYYY-MM-DD'}}}">
+		<label for="filter-date-from">From date</label><input type="date" id="filter-date-from" name="fromDate" value="{{{format_date fromDate 'YYYY-MM-DD'}}}">
+		<label for="filter-date-to">To date</label><input type="date" id="filter-date-to" name="toDate" value="{{{format_date toDate 'YYYY-MM-DD'}}}">
 	</div>
 
 	<button type="submit">Change</button>

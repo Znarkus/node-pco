@@ -107,8 +107,8 @@ app.get('/:typeId(\\d+)/:planId(\\d+)', Lib.auth, function(req, res) {
 });
 
 app.get('/report', Lib.auth, function(req, res) {
-	var fromDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment();
-	var toDate = req.query.date ? moment(req.query.date, 'YYYY-MM-DD') : moment().add(7, 'days');
+	var fromDate = req.query.fromDate ? moment(req.query.fromDate, 'YYYY-MM-DD') : moment();
+	var toDate = req.query.toDate ? moment(req.query.toDate, 'YYYY-MM-DD') : moment().add(7, 'days');
 	var services = [];
 	var categoryNames = {};
 
@@ -149,7 +149,8 @@ app.get('/report', Lib.auth, function(req, res) {
 				// Invalid time zone, strip it
 				const sortDate = moment(service.sort_date, 'YYYY/MM/DD HH:mm:ss')
 
-				if (sortDate.startOf('day').isBetween(fromDate, toDate)) {
+				// Don't use isBetween - it is exclusive
+				if (sortDate.isSameOrAfter(fromDate, 'day') && sortDate.isSameOrBefore(toDate, 'day')) {
 					return Lib.callApi(req.user, 'GET', 'https://services.planningcenteronline.com/plans/' + service.id + '.json').then(function(response) {
 						response.parsedDate = sortDate
 						services.push(response);
@@ -222,9 +223,11 @@ app.get('/report', Lib.auth, function(req, res) {
 		services = _.sortBy(services, 'sort_date');
 
 		res.render('report', {
-			services: services,
-			serviceTypes: serviceTypes,
-			categoryNames: categoryNames,
+			services,
+			serviceTypes,
+			categoryNames,
+			fromDate,
+			toDate,
 			today: new Date(),
 			filteredEmails: _.uniq(filteredEmails),
 			query: req.query
