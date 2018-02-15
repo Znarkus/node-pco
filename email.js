@@ -9,7 +9,7 @@ const { sortBy } = require('lodash')
 
 Promise.resolve(main())
   .finally(() => {
-    console.log('Klar')
+    console.log('Finished')
   })
 
 async function main () {
