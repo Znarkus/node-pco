@@ -8,6 +8,12 @@ Planning Center Online reporting tool.
 ## Configuration
 Environment variables. Create an .env file in development environment.
 
+- `OAUTH_CALLBACK_URL`
+- `OAUTH_CONSUMER_KEY`
+- `OAUTH_CONSUMER_SECRET`
+- `PAT_APP_ID` - Person Access Token App Id
+- `PAT_SECRET` - Person Access Token Secret
+
 ## /sunday
 
 Query parameters:
