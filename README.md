@@ -8,6 +8,16 @@ Planning Center Online reporting tool.
 ## Configuration
 Environment variables. Create an .env file in development environment.
 
+- `OAUTH_CALLBACK_URL`
+- `OAUTH_CONSUMER_KEY`
+- `OAUTH_CONSUMER_SECRET`
+- `PAT_APP_ID` - Person Access Token App Id
+- `PAT_SECRET` - Person Access Token Secret
+- `NODE_ENV` – `development` / `production`
+- `MAILGUN_API_KEY`
+- `MAILGUN_DOMAIN`
+- `EXPORT_FILE` – Make email.js export a file instead
+
 ## /sunday
 
 Query parameters:
