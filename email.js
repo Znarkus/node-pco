@@ -1,7 +1,5 @@
 'use strict'
 
-global.Promise = require('bluebird')
-
 const fs = require('fs')
 const request = require('request-promise')
 const moment = require('moment')
@@ -19,15 +17,21 @@ const mailgun = Mailgun({
 const knex = Knex(require('./knexfile')[process.env.NODE_ENV])
 
 Promise.resolve(main())
-  .finally(() => {
+  .then(() => {
     console.log('Finished')
     return knex.destroy()
   })
+  .catch(err => {
+    console.error(err)
+    return knex.destroy()
+  })
 
-async function main () {
-  return Promise.all(knex('emails').where('is_enabled', true).map(e => {
-    return send(e)
-  }))
+ function main () {
+  return knex('emails')
+    .where('is_enabled', true)
+    .map(e => {
+      return send(e)
+    })
 }
 
 async function send (args) {
@@ -39,7 +43,7 @@ async function send (args) {
   let services = []
 
   for (const t of serviceTypes) {
-    let { data: stTeams } = await queryPco(`service_types/${t}/teams`, { cache: true })
+    let { data: stTeams } = await queryPco(`service_types/${t}/teams`)
 
     stTeams = stTeams.filter(t => {
       return teams.includes(t.attributes.name)
@@ -47,25 +51,34 @@ async function send (args) {
       return t.id
     })
 
-    const { data: serviceType } = await queryPco(`service_types/${t}`, { cache: true })
-    const { data: plans } = await queryPco(`service_types/${t}/plans?filter=future&order=sort_date`, { cache: true })
+    const { data: serviceType } = await queryPco(`service_types/${t}`)
+    const { data: plans } = await queryPco(`service_types/${t}/plans?filter=future&order=sort_date`)
 
     for (const p of plans) {
       const sortDate = moment(p.attributes.sort_date)
 
       if (sortDate.isSameOrAfter(fromDate, 'day') && sortDate.isSameOrBefore(toDate, 'day')) {
-        const { data: service } = await queryPco(p.links.self, { cache: true })
+        const { data: service } = await queryPco(p.links.self)
+
+        service.rosters = []
 
         service.relationships.needed_positions = await queryPco(
-          service.links.needed_positions, { cache: true }
+          service.links.needed_positions
         )
 
         const teamMembers = await queryPco(
-          service.links.team_members, { cache: true }
+          service.links.team_members
         )
 
         service.relationships.needed_positions = service.relationships.needed_positions.data.filter(np => {
           return stTeams.includes(np.relationships.team.data.id)
+            // service.rosters.push({
+            //   position_name: np.attributes.team_position_name,
+            //   missing_quantity: np.attributes.quantity,
+            //   status: 'M',
+            // })
+
+            // return true
         })
 
         service.relationships.service_type = serviceType
@@ -74,8 +87,16 @@ async function send (args) {
         for (const tm of teamMembers.data) {
           if (stTeams.includes(tm.relationships.team.data.id)) {
             service.relationships.team_members.push(tm)
+
+            service.rosters.push({
+              position_name: tm.attributes.team_position_name,
+              name: tm.attributes.name,
+              status: tm.attributes.status,
+            })
           }
         }
+
+        service.rosters = sortBy(service.rosters, 'position_name')
 
         services.push(service)
       }
@@ -115,7 +136,9 @@ async function send (args) {
   }
 }
 
-function queryPco (path, opts = {}) {
+async function queryPco (path, opts = {}) {
+  opts.cache = process.env.NODE_ENV === 'development'
+
   const url = path.indexOf('://') === -1
     ? 'https://api.planningcenteronline.com/services/v2/' + path
     : path
@@ -130,16 +153,25 @@ function queryPco (path, opts = {}) {
     }
   }
 
-  return Promise.resolve(request({
-    uri: url,
-    auth: {
-      user: process.env.PAT_APP_ID,
-      pass: process.env.PAT_SECRET,
-    },
-    json: true,
-  })).tap(res => {
+  try {
+    const res = await request({
+      uri: url,
+      auth: {
+        user: process.env.PAT_APP_ID,
+        pass: process.env.PAT_SECRET,
+      },
+      json: true,
+    })
+
     if (opts.cache) {
       fs.writeFileSync(cachePath, JSON.stringify(res))
     }
-  })
+
+    return res
+
+  } catch (err) {
+    console.error(`${err.error.errors[0].status} http error for ${url}`)
+
+    throw err
+  }
 }

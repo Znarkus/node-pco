@@ -13,39 +13,28 @@
 
     <br>
 
-    {% for team_member in service.relationships.team_members %}
-      {% if team_member.attributes.status == 'U' %}
-        <span style="background: yellow">
-      {% elif team_member.attributes.status == 'D' %}
-        <span style="text-decoration: line-through; opacity: 0.5;">
+    {% for member in service.rosters %}
+      - {{member.position_name}}:
+
+      {% if member.status == 'U' %}
+        <span style="background: yellow">{{member.name}}</span>
+      {% elif member.status == 'D' %}
+        <span style="text-decoration: line-through; opacity: 0.5;">{{member.name}}</span>
+      {# {% elif member.status == 'M' %}
+        <span style="color: red">
+        - {{member.position_name}}:
+          {% if needed_position.attributes.quantity > 1 %}
+            {{needed_position.attributes.quantity}} missing</span>
+          {% else %}
+            Missing</span>
+          {% endif %} #}
       {% else %}
-        <span>
+        <span>{{member.name}}</span>
       {% endif %}
 
-        - {{team_member.attributes.name}}
-
-        ({{team_member.attributes.team_position_name}})
-      </span>
-
       <br>
     {% endfor %}
 
-    {% for needed_position in service.relationships.needed_positions %}
-      <span style="background: #ff9393">
-        -
-
-        {% if needed_position.attributes.quantity > 1 %}
-          {{needed_position.attributes.quantity}} missing
-        {% else %}
-          Missing
-        {% endif %}
-
-
-        ({{needed_position.attributes.team_position_name}})
-      </span>
-
-      <br>
-    {% endfor %}
     <br>
 	{% endfor %}
 </p>
