@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node .",
     "dev": "DEBUG=* NODE_ENV=development nodemon -r dotenv/config",
-    "dev:email": "node -r dotenv/config email"
+    "dev:email": "node -r dotenv/config email",
+    "email": "node email"
   },
   "author": "",
   "license": "ISC",

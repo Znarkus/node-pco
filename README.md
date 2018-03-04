@@ -18,6 +18,12 @@ Environment variables. Create an .env file in development environment.
 - `MAILGUN_DOMAIN`
 - `EXPORT_FILE` – Make email.js export a file instead
 
+## Email
+Send emails based on the contents of emails database table.
+
+- Development: `npm run dev:email`
+- Production: `npm run email`
+
 ## /sunday
 
 Query parameters:
