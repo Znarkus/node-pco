@@ -8,6 +8,7 @@ const nunjucks = require('nunjucks')
 const nunjucksDateFilter = require('nunjucks-date-filter')
 const Knex = require('knex')
 const Mailgun = require('mailgun-js')
+const debug = require('debug')('pco:email')
 
 const mailgun = Mailgun({
   apiKey: process.env.MAILGUN_API_KEY,
@@ -43,10 +44,13 @@ async function send (args) {
   let services = []
 
   for (const t of serviceTypes) {
+    debug(`Service type: ${t}`)
     let { data: stTeams } = await queryPco(`service_types/${t}/teams`)
 
     stTeams = stTeams.filter(t => {
-      return teams.includes(t.attributes.name)
+      const include = teams.includes(t.attributes.name)
+      debug(`Team: ${t.attributes.name} ${include ? '- Include' : ''}`)
+      return include
     }).map(t => {
       return t.id
     })
@@ -61,17 +65,23 @@ async function send (args) {
         const { data: service } = await queryPco(p.links.self)
 
         service.rosters = []
+        service.relationships.service_type = serviceType
+        service.relationships.team_members = []
+
+        debug(`Service: ${service.attributes.sort_date} ${service.relationships.service_type.attributes.name}`)
 
         service.relationships.needed_positions = await queryPco(
           service.links.needed_positions
         )
 
         const teamMembers = await queryPco(
-          service.links.team_members
+          service.links.team_members + '?per_page=100'
         )
 
         service.relationships.needed_positions = service.relationships.needed_positions.data.filter(np => {
-          return stTeams.includes(np.relationships.team.data.id)
+          const include = stTeams.includes(np.relationships.team.data.id)
+          debug(`Needed: ${np.attributes.team_position_name} ${include ? '- Include' : ''}`)
+          return include
             // service.rosters.push({
             //   position_name: np.attributes.team_position_name,
             //   missing_quantity: np.attributes.quantity,
@@ -81,12 +91,13 @@ async function send (args) {
             // return true
         })
 
-        service.relationships.service_type = serviceType
-        service.relationships.team_members = []
-
         for (const tm of teamMembers.data) {
+          debug(`Team: ${tm.attributes.team_position_name}`)
+
           if (stTeams.includes(tm.relationships.team.data.id)) {
             service.relationships.team_members.push(tm)
+
+            debug(`- ${tm.attributes.status} ${tm.attributes.name}`)
 
             service.rosters.push({
               position_name: tm.attributes.team_position_name,
